@@ -60,14 +60,15 @@ class AddLinkHandler(webapp.RequestHandler):
 class GetLinkHandler(webapp.RequestHandler):
     '''This class is built to handle returning the latest URL added. It takes no arguments, and returns a URL.'''
     def get(self):
-        if users.get_current_user():
-            link = Link.all().filter("author =", users.get_current_user()).order("-date").get()
-            if link and link.content:
-                self.response.out.write("<link>" + urllib2.unquote(link.content) + "</link>")
-            else:
-                self.response.out.write("\"\"")
-        elif oauth.get_current_user():
-            link = Link.all().filter("author =", users.get_current_user()).order("-date").get()
+        #if users.get_current_user():
+        #    link = Link.all().filter("author =", users.get_current_user()).order("-date").get()
+        #    if link and link.content:
+        #        self.response.out.write("<link>" + urllib2.unquote(link.content) + "</link>")
+        #    else:
+        #        self.response.out.write("\"\"")
+        #elif oauth.get_current_user():
+        if oauth.get_current_user():
+            link = Link.all().filter("author =", oauth.get_current_user()).order("-date").get()
             if link and link.content:
                 self.response.out.write("<link>" + urllib2.unquote(link.content) + "</link>")
             else:
