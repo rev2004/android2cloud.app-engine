@@ -67,14 +67,18 @@ class GetLinkHandler(webapp.RequestHandler):
         #    else:
         #        self.response.out.write("\"\"")
         #elif oauth.get_current_user():
-        if oauth.get_current_user():
-            link = Link.all().filter("author =", oauth.get_current_user()).order("-date").get()
-            if link and link.content:
-                self.response.out.write("<link>" + urllib2.unquote(link.content) + "</link>")
+	try:
+            if oauth.get_current_user():
+                link = Link.all().filter("author =", oauth.get_current_user()).order("-date").get()
+                if link and link.content:
+                    self.response.out.write("<link>" + urllib2.unquote(link.content) + "</link>")
+		else:
+		    self.response.out.write("\"\"")
             else:
-                self.response.out.write("\"\"")
-        else:
-            self.redirect(users.create_login_url("/links/get"))
+		self.redirect(users.create_login_url("/links/get"))
+
+	except oauth.InvalidOAuthParametersError:
+		self.response.out.write("<error>There has been an error with your login information. Please log out and log back in. If the issue persists, email android2cloud@googlegroups.com.</error>")
 
 class AllLinksHandler(webapp.RequestHandler):
     '''This class is built to handle returning the authenticated users's added link. It takes no arguments, and returns a list of 100 links.'''
