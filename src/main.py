@@ -37,13 +37,13 @@ class AddLinkHandler(webapp.RequestHandler):
         if users.get_current_user():
             link = Link()
             link.author = users.get_current_user()
-            link.content = urllib2.quote(self.request.get('link'))
+            link.content = urllib2.quote(self.request.get('link').encode("utf-8"))
             link.put()
             self.response.out.write("Sent %s to the cloud." % self.request.get('link'))
 	elif oauth.get_current_user():
             link = Link()
             link.author = oauth.get_current_user()
-            link.content = urllib2.quote(self.request.get('link'))
+            link.content = urllib2.quote(self.request.get('link').encode("utf-8"))
             link.put()
             self.response.out.write("Sent %s to the cloud." % self.request.get('link'))
         else:
