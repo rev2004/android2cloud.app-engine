@@ -16,7 +16,7 @@
 #
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
-from google.appengine.api import users, oauth
+from google.appengine.api import users, oauth, memcache
 from models import Link
 import urllib2
 
@@ -37,14 +37,16 @@ class AddLinkHandler(webapp.RequestHandler):
         if users.get_current_user():
             link = Link()
             link.author = users.get_current_user()
-            link.content = urllib2.quote(self.request.get('link').encode("utf-8"))
+            link.content = urllib2.quote(self.request.get('link'))
             link.put()
+            memcache.set(link.author.user_id(), link)
             self.response.out.write("Sent %s to the cloud." % self.request.get('link'))
 	elif oauth.get_current_user():
             link = Link()
             link.author = oauth.get_current_user()
-            link.content = urllib2.quote(self.request.get('link').encode("utf-8"))
+            link.content = urllib2.quote(self.request.get('link'))
             link.put()
+            memcache.set(link.author.user_id(), link)
             self.response.out.write("Sent %s to the cloud." % self.request.get('link'))
         else:
             self.redirect(users.create_login_url("/links/add"))
@@ -67,18 +69,19 @@ class GetLinkHandler(webapp.RequestHandler):
         #    else:
         #        self.response.out.write("\"\"")
         #elif oauth.get_current_user():
-	try:
-            if oauth.get_current_user():
+        if oauth.get_current_user():
+            user = oauth.get_current_user()
+            source = "memcache"
+            link = memcache.get(user.user_id())
+            if link is None:
                 link = Link.all().filter("author =", oauth.get_current_user()).order("-date").get()
-                if link and link.content:
-                    self.response.out.write("<link>" + urllib2.unquote(link.content) + "</link>")
-		else:
-		    self.response.out.write("\"\"")
+                source = "database"
+            if link and link.content:
+                self.response.out.write("<link>" + urllib2.unquote(link.content) + "</link><source>" + source +"</source>")
             else:
-		self.redirect(users.create_login_url("/links/get"))
-
-	except oauth.InvalidOAuthParametersError:
-		self.response.out.write("<error>There has been an error with your login information. Please log out and log back in. If the issue persists, email android2cloud@googlegroups.com.</error>")
+                self.response.out.write("\"\"")
+        else:
+            self.redirect(users.create_login_url("/links/get"))
 
 class AllLinksHandler(webapp.RequestHandler):
     '''This class is built to handle returning the authenticated users's added link. It takes no arguments, and returns a list of 100 links.'''
