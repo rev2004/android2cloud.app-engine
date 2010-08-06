@@ -19,10 +19,11 @@ from google.appengine.ext.webapp import util
 from google.appengine.api import users, oauth, memcache
 from models import Link
 import urllib2
+from datetime import datetime
 
 class MainHandler(webapp.RequestHandler):
     def get(self):
-        self.response.out.write('Hello world!')
+        self.redirect("http://code.google.com/p/android2cloud")
 
 class RedirectHandler(webapp.RequestHandler):
     '''This class is built to handle redirection. It takes a URL, and redirects to that URL.'''
@@ -77,7 +78,8 @@ class GetLinkHandler(webapp.RequestHandler):
                 link = Link.all().filter("author =", oauth.get_current_user()).order("-date").get()
                 source = "database"
             if link and link.content:
-                self.response.out.write("<link>" + urllib2.unquote(link.content) + "</link><source>" + source +"</source>")
+		timedelta = datetime.now() - link.date
+                self.response.out.write("<link>" + urllib2.unquote(link.content) + "</link><source>" + source +"</source><age>" + str(timedelta.days) + "</age>")
             else:
                 self.response.out.write("\"\"")
         else:
